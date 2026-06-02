@@ -80,19 +80,41 @@ module.exports = defineConfig({
 
     async setupNodeEvents(on, config) {
 
-      // ==========================================
-      // CLOUD / SORRY CYPRESS
-      // ==========================================
+      console.log('\n================================');
+      console.log('CONFIG CYPRESS');
+      console.log(config);
+      console.log('================================\n');
+
+      console.log('\n================================');
+      console.log('CONFIG CURRENTS');
+      console.log(currentsConfig);
+      console.log('================================\n');
+
       const mergedConfig = {
         ...config,
         ...currentsConfig,
       };
 
-      await cloudPlugin(on, mergedConfig);
+      console.log('\n================================');
+      console.log('MERGED CONFIG');
+      console.log(mergedConfig);
+      console.log('================================\n');
 
-      // ==========================================
-      // CUCUMBER
-      // ==========================================
+      try {
+        console.log('INICIANDO CLOUD PLUGIN...');
+
+        await cloudPlugin(on, mergedConfig);
+
+        console.log('CLOUD PLUGIN OK');
+      } catch (error) {
+        console.error('\n================================');
+        console.error('CLOUD PLUGIN ERROR');
+        console.error(error);
+        console.error('================================\n');
+
+        throw error;
+      }
+
       await preprocessor.addCucumberPreprocessorPlugin(
         on,
         mergedConfig
@@ -109,9 +131,6 @@ module.exports = defineConfig({
         })
       );
 
-      // ==========================================
-      // TASKS
-      // ==========================================
       on('task', {
         log(message) {
           console.log(message);
@@ -128,18 +147,11 @@ module.exports = defineConfig({
             const fs = require('fs');
             const path = require('path');
 
-            const caminhoAbsoluto = path.isAbsolute(
-              caminho
-            )
+            const caminhoAbsoluto = path.isAbsolute(caminho)
               ? caminho
-              : path.join(
-                  process.cwd(),
-                  caminho
-                );
+              : path.join(process.cwd(), caminho);
 
-            if (
-              fs.existsSync(caminhoAbsoluto)
-            ) {
+            if (fs.existsSync(caminhoAbsoluto)) {
               return fs.readFileSync(
                 caminhoAbsoluto,
                 'utf8'
@@ -153,15 +165,10 @@ module.exports = defineConfig({
         },
       });
 
-      // ==========================================
-      // FIREFOX
-      // ==========================================
       on(
         'before:browser:launch',
         (browser, launchOptions) => {
-          if (
-            browser.family === 'firefox'
-          ) {
+          if (browser.family === 'firefox') {
             launchOptions.preferences[
               'layers.acceleration.disabled'
             ] = true;
