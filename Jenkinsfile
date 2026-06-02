@@ -54,8 +54,8 @@ pipeline {
                                                     --key somekey \
                                                     --reporter mocha-allure-reporter \
                                                     --reporter-options reportDir=allure-results \
-                                                    --ci-build-id SME-SIGNA_JENKINS-BUILD-${BUILD_NUMBER} ; \
-                                            chown 1001:1001 * -R || true ; \
+                                                    --ci-build-id SME-SIGNA-JENKINS-BUILD-${BUILD_NUMBER} && \
+                                            chown 1001:1001 * -R || true && \
                                             chmod 777 * -R || true"
                                 '''
                             }

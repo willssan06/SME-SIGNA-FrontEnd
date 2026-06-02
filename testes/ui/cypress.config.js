@@ -2,6 +2,8 @@ const { defineConfig } = require('cypress');
 const createBundler = require('@bahmutov/cypress-esbuild-preprocessor');
 const preprocessor = require('@badeball/cypress-cucumber-preprocessor');
 const createEsbuildPlugin = require('@badeball/cypress-cucumber-preprocessor/esbuild');
+const { cloudPlugin } = require('cypress-cloud/plugin');
+const currentsConfig = require('./currents.config.js');
 const dotenv = require('dotenv');
 const path = require('path');
 
@@ -64,6 +66,15 @@ module.exports = defineConfig({
     async setupNodeEvents(on, config) {
 
       // =========================
+      // 1️⃣ CLOUD PLUGIN (Cypress Cloud / Sorry Cypress)
+      // =========================
+      const mergedConfig = {
+        ...config,
+        ...currentsConfig,
+      };
+      await cloudPlugin(on, mergedConfig);
+
+      // =========================
       // 2️⃣ CUCUMBER
       // =========================
       await preprocessor.addCucumberPreprocessorPlugin(on, config);
@@ -120,7 +131,7 @@ module.exports = defineConfig({
         return launchOptions;
       });
 
-      return config;
+      return await cloudPlugin(on, config);
     },
   },
 });
