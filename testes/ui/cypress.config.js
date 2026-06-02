@@ -40,23 +40,38 @@ module.exports = defineConfig({
 
     retries: {
       runMode: 1,
-      openMode: 0
+      openMode: 0,
     },
 
     env: {
-      baseUrl: process.env.BASE_URL || 'https://qa-signa.sme.prefeitura.sp.gov.br',
-      loginUrl: process.env.LOGIN_URL || 'https://qa-signa.sme.prefeitura.sp.gov.br/login',
-      username: process.env.SIGNA_USERNAME || process.env.USERNAME || '',
-      password: process.env.SIGNA_PASSWORD || process.env.PASSWORD || '',
-      newPasswordTest: process.env.SIGNA_NEW_PASSWORD_TEST || '',
+      baseUrl:
+        process.env.BASE_URL ||
+        'https://qa-signa.sme.prefeitura.sp.gov.br',
 
-      // Detectar contexto de execução (CI=true na esteira Jenkins)
+      loginUrl:
+        process.env.LOGIN_URL ||
+        'https://qa-signa.sme.prefeitura.sp.gov.br/login',
+
+      username:
+        process.env.SIGNA_USERNAME ||
+        process.env.USERNAME ||
+        '',
+
+      password:
+        process.env.SIGNA_PASSWORD ||
+        process.env.PASSWORD ||
+        '',
+
+      newPasswordTest:
+        process.env.SIGNA_NEW_PASSWORD_TEST ||
+        '',
+
       CI: process.env.CI || false,
 
-      // API EOL — SME Integração
-      // CI: credenciais vêm do secret cypress_env_signa (Jenkins)
-      // Local: credenciais carregadas do arquivo .env via dotenv
-      API_EOL_BASE_URL: process.env.API_EOL_BASE_URL || 'https://hom-smeintegracaoapi.sme.prefeitura.sp.gov.br',
+      API_EOL_BASE_URL:
+        process.env.API_EOL_BASE_URL ||
+        'https://hom-smeintegracaoapi.sme.prefeitura.sp.gov.br',
+
       API_EOL_KEY: process.env.API_EOL_KEY,
       API_RF_LOGIN: process.env.API_RF_LOGIN,
       API_PASSWORD: process.env.API_PASSWORD,
@@ -65,51 +80,72 @@ module.exports = defineConfig({
 
     async setupNodeEvents(on, config) {
 
-      // =========================
-      // 1️⃣ CLOUD PLUGIN (Cypress Cloud / Sorry Cypress)
-      // =========================
+      // ==========================================
+      // CLOUD / SORRY CYPRESS
+      // ==========================================
       const mergedConfig = {
         ...config,
         ...currentsConfig,
       };
+
       await cloudPlugin(on, mergedConfig);
 
-      // =========================
-      // 2️⃣ CUCUMBER
-      // =========================
-      await preprocessor.addCucumberPreprocessorPlugin(on, config);
+      // ==========================================
+      // CUCUMBER
+      // ==========================================
+      await preprocessor.addCucumberPreprocessorPlugin(
+        on,
+        mergedConfig
+      );
 
       on(
         'file:preprocessor',
         createBundler({
-          plugins: [createEsbuildPlugin.default(config)],
+          plugins: [
+            createEsbuildPlugin.default(
+              mergedConfig
+            ),
+          ],
         })
       );
 
-      // =========================
-      // 3️⃣ TASKS
-      // =========================
+      // ==========================================
+      // TASKS
+      // ==========================================
       on('task', {
         log(message) {
           console.log(message);
           return null;
         },
+
         table(message) {
           console.table(message);
           return null;
         },
-        // Leitura segura de arquivo — nunca falha se o arquivo não existe
-        // Obrigatório para testes de API (token.json, etc.)
+
         lerArquivoSeguro(caminho) {
           try {
             const fs = require('fs');
             const path = require('path');
-            const caminhoAbsoluto = path.isAbsolute(caminho)
+
+            const caminhoAbsoluto = path.isAbsolute(
+              caminho
+            )
               ? caminho
-              : path.join(process.cwd(), caminho);
-            if (fs.existsSync(caminhoAbsoluto)) {
-              return fs.readFileSync(caminhoAbsoluto, 'utf8');
+              : path.join(
+                  process.cwd(),
+                  caminho
+                );
+
+            if (
+              fs.existsSync(caminhoAbsoluto)
+            ) {
+              return fs.readFileSync(
+                caminhoAbsoluto,
+                'utf8'
+              );
             }
+
             return null;
           } catch (e) {
             return null;
@@ -117,21 +153,41 @@ module.exports = defineConfig({
         },
       });
 
-      // =========================
-      // 4️⃣ FIREFOX
-      // =========================
-      on('before:browser:launch', (browser, launchOptions) => {
-        if (browser.family === 'firefox') {
-          launchOptions.preferences['layers.acceleration.disabled'] = true;
-          launchOptions.preferences['dom.max_script_run_time'] = 0;
-          launchOptions.preferences['dom.max_chrome_script_run_time'] = 0;
-          launchOptions.preferences['browser.cache.disk.enable'] = false;
-          launchOptions.preferences['browser.cache.memory.enable'] = false;
-        }
-        return launchOptions;
-      });
+      // ==========================================
+      // FIREFOX
+      // ==========================================
+      on(
+        'before:browser:launch',
+        (browser, launchOptions) => {
+          if (
+            browser.family === 'firefox'
+          ) {
+            launchOptions.preferences[
+              'layers.acceleration.disabled'
+            ] = true;
 
-      return await cloudPlugin(on, config);
+            launchOptions.preferences[
+              'dom.max_script_run_time'
+            ] = 0;
+
+            launchOptions.preferences[
+              'dom.max_chrome_script_run_time'
+            ] = 0;
+
+            launchOptions.preferences[
+              'browser.cache.disk.enable'
+            ] = false;
+
+            launchOptions.preferences[
+              'browser.cache.memory.enable'
+            ] = false;
+          }
+
+          return launchOptions;
+        }
+      );
+
+      return mergedConfig;
     },
   },
 });
