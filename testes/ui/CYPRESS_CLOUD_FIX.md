@@ -1,15 +1,17 @@
-# 🔧 Correção do Cypress Cloud - Status Atual
+# 🔧 Cypress + Currents CLI (Sorry Cypress) - Solução Final
 
 ## ✅ O que foi corrigido
 
-1. **Removido plugin incompatível**: O plugin `cypress-cloud/plugin` foi removido do `cypress.config.js` pois não é suportado nativamente pelo Cypress 13.17.0
-2. **Versões instaladas e compatíveis**:
-   - `cypress@13.17.0` ✓
-   - `cypress-cloud@1.13.1` ✓
+1. **Removido plugin incompatível**: O plugin `cypress-cloud/plugin` foi removido do `cypress.config.js` (não suportado no Cypress 13.17.0)
+2. **Removido pacote obsoleto**: `cypress-cloud@1.13.1` foi desinstalado (versão antiga descontinuada)
+3. **Instalado Currents CLI moderno**: `@currents/cli` (versão atualizada e compatível)
+4. **Versões finais instaladas**:
+   - ✅ `cypress@13.17.0`
+   - ✅ `@currents/cli` (moderna, sem dependências de plugins)
 
-## 📋 Como usar Cypress com Sorry Cypress agora
+## 📋 Como usar Cypress e Currents agora
 
-### Opção 1: Rodar Cypress normalmente (sem integração com Sorry Cypress)
+### Opção 1: Rodar Cypress normalmente (sem cloud)
 
 ```bash
 cd testes/ui
@@ -24,24 +26,24 @@ npx cypress run --browser chrome
 npx cypress run --browser firefox
 ```
 
-### Opção 2: Integração com Sorry Cypress via CLI (cypress-cloud)
+### Opção 2: Integração com Currents (Sorry Cypress ou Currents.dev)
 
-Para integrar com Sorry Cypress, use `cypress-cloud` como wrapper do CLI:
+Use `npx currents` como wrapper do Cypress. Não precisa de plugin!
 
 ```bash
 cd testes/ui
 
-# Rodar com cypress-cloud (substitui 'cypress' por 'cypress-cloud')
-npx cypress-cloud run --browser chrome
+# Rodar com Currents (sem necessidade de configuração de plugin)
+npx currents run --browser chrome
 
 # Rodar em paralelo
-npx cypress-cloud run --parallel --record --browser chrome
+npx currents run --parallel --record --browser chrome
 
 # Com variáveis de ambiente do Sorry Cypress
-export SORRY_CYPRESS_PROJECT_ID="SME-SIGNA"
-export SORRY_CYPRESS_RECORD_KEY="somekey"
-export SORRY_CYPRESS_URL="http://10.50.1.202:1234"
-npx cypress-cloud run --browser chrome
+export CURRENTS_PROJECT_ID="SME-SIGNA"
+export CURRENTS_RECORD_KEY="somekey"
+export CURRENTS_API_URL="http://10.50.1.202:1234"  # Para Sorry Cypress local
+npx currents run --browser chrome
 ```
 
 ## 🔗 Configuração de variáveis de ambiente
@@ -55,11 +57,11 @@ LOGIN_URL=https://qa-signa.sme.prefeitura.sp.gov.br/login
 SIGNA_USERNAME=seu_usuario
 SIGNA_PASSWORD=sua_senha
 
-# Sorry Cypress (opcional)
-SORRY_CYPRESS_PROJECT_ID=SME-SIGNA
-SORRY_CYPRESS_RECORD_KEY=somekey
-SORRY_CYPRESS_URL=http://10.50.1.202:1234
-SORRY_CYPRESS_PARALLEL=false
+# Currents (Sorry Cypress ou Currents.dev)
+CURRENTS_PROJECT_ID=SME-SIGNA
+CURRENTS_RECORD_KEY=somekey
+CURRENTS_API_URL=http://10.50.1.202:1234  # Para Sorry Cypress local
+# Para Currents.dev, deixe CURRENTS_API_URL em branco
 
 # API EOL
 API_EOL_BASE_URL=https://hom-smeintegracaoapi.sme.prefeitura.sp.gov.br
@@ -78,21 +80,58 @@ Adicione ao `testes/ui/package.json` scripts como:
   "cy:open": "cypress open",
   "cy:run": "cypress run --browser chrome",
   "cy:run:firefox": "cypress run --browser firefox",
-  "cy:cloud:run": "cypress-cloud run --browser chrome",
-  "cy:cloud:parallel": "cypress-cloud run --parallel --record --browser chrome"
+  "currents:run": "currents run --browser chrome",
+  "currents:parallel": "currents run --parallel --record --browser chrome"
 }
 ```
 
 ## ⚠️ Notas importantes
 
-- O arquivo `currents.config.js` continua sendo usado apenas se você rodar via `cypress-cloud`
-- Para CI/CD (Jenkins), use o comando `npx cypress-cloud run` para integração com Sorry Cypress
-- O arquivo `cypress.config.js` agora é limpo e sem dependências de plugins não-oficiais
-- Se precisar de funcionalidades do plugin no futuro, considere atualizar para Cypress 15+ com suporte nativo
+- **Currents CLI não precisa de plugin** no cypress.config.js
+- O arquivo `cypress.config.js` é limpo e sem dependências de plugins não-oficiais
+- `cypress-cloud` foi removido (pacote obsoleto)
+- `@currents/cli` é o novo padrão para integração com Currents.dev e Sorry Cypress
+- Para Sorry Cypress local, configure `CURRENTS_API_URL=http://10.50.1.202:1234`
+- Para Currents.dev (cloud), use o `CURRENTS_RECORD_KEY` e deixe a URL padrão
 
-## 🚀 Próximos passos
+## 🚀 Como integrar com Jenkins (CI/CD)
 
-1. Instale as dependências se necessário: `npm install`
-2. Teste localmente: `npm run cy:run`
-3. Para CI/CD, configure as variáveis de ambiente do Sorry Cypress no Jenkins
-4. Execute: `npm run cy:cloud:run` em seu pipeline
+No Jenkinsfile, use:
+
+```groovy
+stage('E2E Tests - Currents') {
+    steps {
+        sh '''
+            cd testes/ui
+            export CURRENTS_PROJECT_ID="SME-SIGNA"
+            export CURRENTS_RECORD_KEY="${CURRENTS_RECORD_KEY}"
+            export CURRENTS_API_URL="http://10.50.1.202:1234"
+            npx currents run --parallel --record --browser chrome
+        '''
+    }
+}
+```
+
+Ou para Currents.dev:
+
+```groovy
+stage('E2E Tests - Currents Cloud') {
+    steps {
+        sh '''
+            cd testes/ui
+            export CURRENTS_PROJECT_ID="your-project-id"
+            export CURRENTS_RECORD_KEY="${CURRENTS_RECORD_KEY}"
+            npx currents run --parallel --record --browser chrome
+        '''
+    }
+}
+```
+
+## 🎯 Próximos passos
+
+1. Instale as dependências: `npm install`
+2. Configure o arquivo `.env` com suas credenciais
+3. Teste localmente: `npm run cy:run`
+4. Para Currents: `npm run currents:run`
+5. Para CI/CD, configure as variáveis de ambiente no Jenkins
+
